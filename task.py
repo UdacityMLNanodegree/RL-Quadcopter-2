@@ -1,5 +1,6 @@
 import numpy as np
 from physics_sim import PhysicsSim
+import math
 
 
 class MyTask(): 
@@ -35,17 +36,42 @@ class MyTask():
 #         reward = 1.-.3*(abs(self.sim.pose[:3] - self.target_pos)).sum()
 #         return reward
     
+    
+    def __euclideanDistance(self, p, q):
+        '''Calculates euclidean distance between two points in nth dimension'''
+        n = len(p)
+        sums = 0
+        for i in range(n):
+            sums += (p[i] - q[i]) ** 2
+        dist = math.sqrt(sums)
+        return dist
+
     def get_reward(self):
         """My own reward."""
+        
+#         current_position = self.sim.pose[:3]
+#         print(type(current_position), current_position)
+#         print(type(self.target_pos), self.target_pos)
+        self.distanceFromTarget = self.__euclideanDistance(self.sim.pose[:3], self.target_pos)
 
 #         reward = 1. - .3 * (abs(self.sim.pose[:3] - self.target_pos)).sum() # Udacity
 #         reward = np.tanh(1. - .3 * (abs(self.sim.pose[:3] - self.target_pos))).sum()
-        reward = np.tanh(1. - 0.003*(abs(self.sim.pose[:3] - self.target_pos))).sum()
+#         reward = np.tanh(1. - 0.003*(abs(self.sim.pose[:3] - self.target_pos))).sum()
+    
+        reward_close = 0
+        if self.distanceFromTarget < 2:
+            reward_close = 50
+        else:
+            reward_close = -10
         
 #         #detect crash
+        reward_crash = 0
         if ((self.sim.pose[2] == 0) and (abs(self.sim.v[2]) > 2.)):
             self.crash = True
             self.counter = 0
+            reward_crash = -1000
+            
+        reward = np.tanh(1. - 0.003*(abs(self.sim.pose[:3] - self.target_pos))).sum() + np.tanh(reward_close) + np.tanh(reward_crash)
                   
         return reward
 
